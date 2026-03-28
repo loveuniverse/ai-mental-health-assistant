@@ -1,0 +1,43 @@
+<template>
+  <div class="backend-layout">
+    <el-container class="main-container">
+      <SideBar></SideBar>
+      <el-container>
+        <el-header>
+          <NavBar></NavBar>
+        </el-header>
+        <el-main class="main-container">
+          <router-view class="content-container"></router-view>
+        </el-main>
+      </el-container>
+    </el-container>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.backend-layout {
+  height: 100vh;
+  .el-header{
+    height: 74px !important;
+  }
+  .main-container{
+    height:100%;
+    .content-container{
+    padding:20px;
+    background-color: #fff;
+    min-height: calc(100% - 74px);
+    }
+  }
+}
+</style>
+
+<script>
+import SideBar from './SideBar.vue'
+import NavBar from './NavBar.vue'
+export default {
+  components: {
+    SideBar,
+    NavBar
+  }
+}
+</script>
