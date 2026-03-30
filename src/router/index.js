@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import BackendLayout from '@/components/BackendLayout.vue'
-import AuthorLayout from '@/components/AuthorLayout.vue'
+import AuthLayout from '@/components/AuthLayout.vue'
 
 const backendRoutes = [
   {
@@ -46,7 +46,7 @@ const backendRoutes = [
   },
   {
     'path':'/auth',
-    component: AuthorLayout,
+    component: AuthLayout,
     children: [
       {
         path: 'login',
