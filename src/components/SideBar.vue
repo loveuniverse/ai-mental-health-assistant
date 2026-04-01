@@ -1,3 +1,8 @@
+<!--
+  侧边栏组件
+  显示系统Logo、名称和导航菜单
+  支持折叠/展开功能
+-->
 <template>
   <el-aside :width="isCollapsed ? '64px' : '264px'">
     <el-menu
@@ -6,6 +11,7 @@
         default-active="2"
         class="menu-style"
       >
+      <!-- Logo和品牌信息区域 -->
       <div class="brand">
         <el-image :src="robotLogo" alt="logo" class="robot-logo"/>
         <div v-show="!isCollapsed" class="info-card">
@@ -13,6 +19,7 @@
           <p class="brand-subtitle">管理后台</p>
         </div>
       </div>
+      <!-- 动态渲染菜单项，从路由配置中读取 -->
         <el-menu-item @click="selectMenu" v-for="item in router.options.routes[0].children" :key="item.path" :index="item.path">
           <el-icon><component :is="item.meta.icon" /></el-icon>
           <span>{{ item.meta.title }}</span>
@@ -22,6 +29,7 @@
 </template>
 
 <style lang="scss" scoped>
+/* 菜单样式 */
 .menu-style{
   .brand{
   display: flex;
@@ -56,12 +64,21 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '@/stores/admin'
+
+// 获取路由实例
 const router = useRouter()
 
+// 机器人Logo图片路径
 const robotLogo = new URL('@/assets/images/机器人.png', import.meta.url).href
 
+// 计算属性：获取侧边栏折叠状态
 const isCollapsed = computed(() => useAdminStore().isCollapsed)
 
+/**
+ * 菜单选择事件处理
+ * 点击菜单项时导航到对应页面
+ * @param {Object} key - 点击的菜单项信息
+ */
 const selectMenu = (key) => {
   const currentRoute=router.options.routes[0]
   router.push(`${currentRoute.path}/${key.index}`)
