@@ -1,7 +1,13 @@
+<!--
+  数据仪表盘页面
+  展示系统核心数据指标和趋势分析图表
+  包含系统统计卡片、情绪趋势分析、咨询会话统计、用户活跃度趋势
+-->
 <template>
   <div class="dashboard-container">
     <!-- 系统统计卡片 -->
     <el-row :gutter="20">
+      <!-- 总用户数卡片 -->
       <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-card v-if="aiData.systemOverview">
           <div class="card-content">
@@ -18,6 +24,7 @@
           </div>
         </el-card>
       </el-col>
+      <!-- 情绪日志卡片 -->
       <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-card v-if="aiData.systemOverview">
           <div class="card-content">
@@ -34,6 +41,7 @@
           </div>
         </el-card>
       </el-col>
+      <!-- 咨询会话卡片 -->
       <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-card v-if="aiData.systemOverview">
           <div class="card-content">
@@ -50,6 +58,7 @@
           </div>
         </el-card>
       </el-col>
+      <!-- 平均情绪卡片 -->
       <el-col :xs="24" :sm="12" :md="8" :lg="6">
         <el-card v-if="aiData.systemOverview">
           <div class="card-content">
@@ -70,7 +79,6 @@
       <!-- 情绪趋势分析卡片 -->
       <el-col :xs="24" :sm="24" :md="12" :lg="12">
         <el-card style="width: 100%">
-          <!-- 卡片里自定义标题用具名插槽的写法 -->
           <template #header>
             <div class="card-header">情绪趋势分析</div>
           </template>
@@ -86,6 +94,7 @@
             <div class="card-header">咨询会话统计</div>
           </template>
           <div class="chart-content">
+            <!-- 会话统计摘要 -->
             <div v-if="aiData.consultationStats" class="consultation-stats">
               <div class="stat-item">
                 <div class="stat-label">总会话数</div>
@@ -118,7 +127,6 @@
     <el-row style="margin-top: 20px">
       <el-col :xs="24" :sm="24" :md="24" :lg="24">
         <el-card style="width: 100%">
-          <!-- 卡片里自定义标题用具名插槽的写法 -->
           <template #header>
             <div class="card-header">用户活跃度趋势</div>
           </template>
@@ -133,28 +141,66 @@
     </el-row>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from "vue";
 import { getAnalyticsOverview } from "@/api/admin";
 import * as echarts from "echarts";
-//统计图片引入
+
+// ==================== 图标资源 ====================
 const iconUrli = new URL("@/assets/images/users.png", import.meta.url).href;
 const iconLike = new URL("@/assets/images/like.png", import.meta.url).href;
 const iconComments = new URL("@/assets/images/comments.png", import.meta.url)
   .href;
 const iconSmile = new URL("@/assets/images/smile.png", import.meta.url).href;
-//控制台数据
-const aiData = ref({});
 
-// 初始化图标
+// ==================== 数据状态 ====================
+const aiData = ref({});  // 仪表盘数据
+
+// ==================== 图表实例 ====================
+const emotionChart = ref(null);
+const emotionChartRef = ref(null);
+const consultationChart = ref(null);
+const consultationChartRef = ref(null);
+const userActivityChart = ref(null);
+const userActivityChartRef = ref(null);
+
+// ==================== 生命周期 ====================
+/**
+ * 组件挂载时获取数据并初始化图表
+ */
+onMounted(() => {
+  getAnalyticsOverview()
+    .then((res) => {
+      console.log("API Response:", res);
+      aiData.value = res;
+      console.log("Data loaded:", aiData.value);
+      // 延迟执行图表初始化，确保数据已完全设置
+      setTimeout(() => {
+        console.log("Initializing charts...");
+        initCharts();
+        console.log("Charts initialized");
+      }, 100);
+    })
+    .catch((error) => {
+      console.error("Error fetching analytics data:", error);
+    });
+});
+
+// ==================== 图表初始化 ====================
+/**
+ * 初始化所有图表
+ */
 const initCharts = () => {
   initEmotionChart();
   initConsultationChart();
   initUserActivityChart();
 };
-//情绪趋势分析
-const emotionChart = ref(null);
-const emotionChartRef = ref(null);
+
+/**
+ * 初始化情绪趋势分析图表
+ * 使用折线图展示平均情绪评分和记录数量趋势
+ */
 const initEmotionChart = () => {
   if (!emotionChartRef.value) return;
 
@@ -191,8 +237,7 @@ const initEmotionChart = () => {
       top: 10,
     },
     tooltip: {
-      // 提示框
-      trigger: "axis", // 触发类型：坐标轴触发
+      trigger: "axis",
       borderColor: "#fab1a0",
       borderWidth: 1,
       textStyle: {
@@ -200,12 +245,10 @@ const initEmotionChart = () => {
       },
     },
     legend: {
-      // 图例组件
       data: ["平均情绪评分", "记录数量"],
       top: 40,
     },
     grid: {
-      // 设置显示容器位置
       left: "3%",
       right: "4%",
       bottom: "3%",
@@ -259,9 +302,9 @@ const initEmotionChart = () => {
     series: [
       {
         name: "平均情绪评分",
-        type: "line", // 折线图
+        type: "line",
         data: TrendData.map((item) => item.avgMoodScore),
-        smooth: true, // 平滑曲线
+        smooth: true,
         lineStyle: {
           width: 3,
           color: "#ffeaa7",
@@ -272,7 +315,7 @@ const initEmotionChart = () => {
       },
       {
         name: "记录数量",
-        type: "line", // 折线图
+        type: "line",
         data: TrendData.map((item) => item.recordCount),
         smooth: true,
         lineStyle: {
@@ -286,25 +329,22 @@ const initEmotionChart = () => {
     ],
   };
 
-  //设置图表选项
   emotionChart.value.setOption(option);
 };
 
-//咨询会话统计
-const consultationChart = ref(null);
-const consultationChartRef = ref(null);
+/**
+ * 初始化咨询会话统计图表
+ * 使用柱状图展示会话数量和参与用户数
+ */
 const initConsultationChart = () => {
   if (!consultationChartRef.value) return;
 
-  // 确保DOM元素有宽度和高度
   const dom = consultationChartRef.value;
   if (!dom || dom.clientWidth === 0 || dom.clientHeight === 0) {
-    // 延迟执行，确保DOM已经渲染
     setTimeout(initConsultationChart, 100);
     return;
   }
 
-  // 确保会话统计数据存在
   if (
     !aiData.value ||
     !aiData.value.consultationStats ||
@@ -312,13 +352,10 @@ const initConsultationChart = () => {
   )
     return;
 
-  //销毁现有的图表
   if (consultationChart.value) consultationChart.value.dispose();
 
-  //创建echarts实例
   consultationChart.value = echarts.init(dom);
 
-  //获取会话统计的数据
   const dailyTrend = aiData.value.consultationStats.dailyTrend;
   const option = {
     title: {
@@ -423,23 +460,21 @@ const initConsultationChart = () => {
       },
     ],
   };
-  //设置图表选项
   consultationChart.value.setOption(option);
 };
-//用户活跃度趋势
-const userActivityChart = ref(null);
-const userActivityChartRef = ref(null);
+
+/**
+ * 初始化用户活跃度趋势图表
+ * 使用面积图展示活跃用户、新增用户、日记用户、咨询用户趋势
+ */
 const initUserActivityChart = () => {
   if (!userActivityChartRef.value) return;
-  // 确保DOM元素有宽度和高度
   const dom = userActivityChartRef.value;
   if (!dom || dom.clientWidth === 0 || dom.clientHeight === 0) {
-    // 延迟执行，确保DOM已经渲染
     setTimeout(initUserActivityChart, 100);
     return;
   }
 
-  // 确保用户活跃度数据存在
   if (
     !aiData.value ||
     !aiData.value.userActivity ||
@@ -447,20 +482,10 @@ const initUserActivityChart = () => {
   )
     return;
 
-  // 检查数据结构
-  console.log("User activity data structure:", {
-    hasUserActivity: !!aiData.value.userActivity,
-    isArray: Array.isArray(aiData.value.userActivity),
-    trendLength: aiData.value.userActivity.length,
-  });
-
-  //销毁现有的图表
   if (userActivityChart.value) userActivityChart.value.dispose();
 
-  //创建echarts实例
   userActivityChart.value = echarts.init(dom);
 
-  //获取用户活跃度趋势的数据
   const activityData = aiData.value.userActivity;
   const option = {
     title: {
@@ -592,28 +617,12 @@ const initUserActivityChart = () => {
       },
     ],
   };
-  //设置图表选项
   userActivityChart.value.setOption(option);
 };
-onMounted(() => {
-  getAnalyticsOverview()
-    .then((res) => {
-      console.log("API Response:", res);
-      aiData.value = res;
-      console.log("Data loaded:", aiData.value);
-      // 延迟执行图表初始化，确保数据已完全设置
-      setTimeout(() => {
-        console.log("Initializing charts...");
-        initCharts();
-        console.log("Charts initialized");
-      }, 100);
-    })
-    .catch((error) => {
-      console.error("Error fetching analytics data:", error);
-    });
-});
 </script>
+
 <style lang="scss" scoped>
+/* 仪表盘容器样式 */
 .dashboard-container {
   padding: 20px;
 
@@ -621,6 +630,7 @@ onMounted(() => {
     padding: 10px;
   }
 
+  /* 统计卡片内容样式 */
   .card-content {
     display: flex;
     align-items: center;
@@ -649,6 +659,7 @@ onMounted(() => {
         height: 50px;
       }
 
+      /* 不同卡片的背景渐变色 */
       &.users {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       }
@@ -682,6 +693,7 @@ onMounted(() => {
     }
   }
 
+  /* 图表内容区域样式 */
   .chart-content {
     padding: 20px;
     height: 300px;
@@ -701,6 +713,7 @@ onMounted(() => {
       height: 100% !important;
     }
 
+    /* 会话统计摘要样式 */
     .consultation-stats {
       display: flex;
       justify-content: space-around;
@@ -729,6 +742,7 @@ onMounted(() => {
     }
   }
 
+  /* 卡片标题样式 */
   .card-header {
     font-size: 16px;
     font-weight: 600;

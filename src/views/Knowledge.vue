@@ -1,11 +1,19 @@
+<!--
+  知识文章管理页面
+  提供文章的增删改查功能，支持按标题、分类、状态筛选
+  包含文章列表展示、分页、发布/下线操作
+-->
 <template>
   <div>
+    <!-- 页面头部 -->
     <PageHead title="知识文章">
       <template #buttons>
         <el-button @click="handleEdit({})" type="primary">新增</el-button>
       </template>
     </PageHead>
+    <!-- 搜索表单 -->
     <TableSearch :formItem="formItem" @search="handleSearch" />
+    <!-- 文章列表表格 -->
     <el-table :data="tableData" style="width:100%;margin-top:25px">
       <el-table-column width="600" label="文章标题" fixed="left">
         <template #default="scope">
@@ -18,6 +26,7 @@
       <el-table-column prop="authorName" label="作者" width="150" />
       <el-table-column prop="readCount" label="阅读量" width="150" />
       <el-table-column prop="updatedAt" label="发布时间" width="150" />
+      <!-- 操作列 -->
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="scope">
           <el-button @click="handleEdit(scope.row)" text type="primary">编辑</el-button>
@@ -27,6 +36,7 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 分页组件 -->
     <el-pagination
     style="margin-top:25px"
     :page-size="pagination.size"
@@ -34,6 +44,7 @@
     :total="pagination.total"
     @change="handleChange"
     />
+    <!-- 文章编辑弹窗 -->
     <ArticleDialog v-model:modelValue="dialogVisible" :article="currentArticle" :categories="categories" @success="handleSuccess" />
   </div>
 </template>
@@ -46,6 +57,7 @@ import {categoryTree, articlePage, getArticleDetail, changeArticleStatus, delete
 import ArticleDialog from '@/components/ArticleDialog.vue'
 import { ElMessageBox , ElMessage} from 'element-plus'
 
+// ==================== 搜索配置 ====================
 const formItem = [
   {
     comp: 'input',
@@ -81,12 +93,25 @@ const formItem = [
   }
 ]
 
+// ==================== 分页状态 ====================
 const pagination = reactive({
     currentPage: 1,
     size: 10,
     total: 0
 })
 
+// ==================== 数据状态 ====================
+const categoryMap = reactive({})    // 分类ID到名称的映射
+const categories = ref([])          // 分类选项列表
+const tableData=ref([])             // 表格数据
+const dialogVisible = ref(false)    // 弹窗显示状态
+const currentArticle = ref(null)    // 当前编辑的文章
+
+// ==================== 方法 ====================
+/**
+ * 搜索文章列表
+ * @param {Object} formData - 搜索条件
+ */
 const handleSearch = async (formData) => {
   console.log(formData, '查询参数')
 
@@ -100,32 +125,26 @@ const handleSearch = async (formData) => {
   pagination.total=total
 }
 
+/**
+ * 分页切换
+ * @param {number} page - 页码
+ */
 const handleChange = (page) => {
   pagination.currentPage = page
   handleSearch()
 }
 
-const categoryMap = reactive({})
-
-const categories = ref([])
-
-const tableData=ref([])
-
-const dialogVisible = ref(false)
-
-const currentArticle = ref(null)
-
-const handleSuccess = () => {
-
-}
-
+/**
+ * 编辑或新增文章
+ * @param {Object} row - 文章数据（空对象表示新增）
+ */
 const handleEdit = (row) => {
   if(!row.id) {
     // 新增文章
     currentArticle.value = null
     dialogVisible.value = true
   } else {
-    // 编辑文章
+    // 编辑文章，获取详情后打开弹窗
     getArticleDetail(row.id).then(res => {
     currentArticle.value = res
     dialogVisible.value = true
@@ -133,9 +152,13 @@ const handleEdit = (row) => {
   }
 }
 
+/**
+ * 发布文章
+ * @param {Object} row - 文章数据
+ */
 const handlePublish = (row) => {
   ElMessageBox.confirm(
-    `确认发布文章“${row.title}”吗？`,
+    `确认发布文章"${row.title}"吗？`,
     '确认',
     {
       confirmButtonText: '确认发布',
@@ -150,9 +173,13 @@ const handlePublish = (row) => {
   })
 }
 
+/**
+ * 下线文章
+ * @param {Object} row - 文章数据
+ */
 const handleUnpublish = (row) => {
   ElMessageBox.confirm(
-    `确认下线文章“${row.title}”吗？`,
+    `确认下线文章"${row.title}"吗？`,
     '确认',
     {
       confirmButtonText: '确认下线',
@@ -167,9 +194,13 @@ const handleUnpublish = (row) => {
   })
 }
 
+/**
+ * 删除文章
+ * @param {Object} row - 文章数据
+ */
 const handleDelete = (row) => {
   ElMessageBox.confirm(
-    `确认删除文章“${row.title}”吗？`,
+    `确认删除文章"${row.title}"吗？`,
     '确认',
     {
       confirmButtonText: '确认删除',
@@ -184,9 +215,16 @@ const handleDelete = (row) => {
   })
 }
 
+/**
+ * 操作成功回调
+ */
+const handleSuccess = () => {
+  handleSearch()
+}
 
-
+// ==================== 生命周期 ====================
 onMounted(async () => {
+    // 获取分类列表
     const data = await categoryTree()
     categories.value = data.map(item => {
         categoryMap[item.id] = item.categoryName
@@ -197,6 +235,7 @@ onMounted(async () => {
     })
     formItem[1].options = categories.value
 
+    // 初始加载文章列表
     handleSearch({})
 })
 </script>

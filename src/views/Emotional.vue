@@ -1,7 +1,15 @@
+<!--
+  情绪日志管理页面
+  展示用户的情绪日记记录，包含情绪评分、生活指标、AI分析结果
+  支持按用户ID和情绪评分范围筛选
+-->
 <template>
   <div>
+    <!-- 页面头部 -->
     <PageHead title="情绪日志" />
+    <!-- 搜索表单 -->
     <TableSearch :formItem="formItem" @search="handleSearch" />
+    <!-- 情绪日志列表 -->
     <el-table :data="tableData" style="width: 100%">
       <el-table-column prop="id" label="用户ID" width="80" />
       <el-table-column label="会话ID" width="80">
@@ -10,11 +18,13 @@
         </template>
       </el-table-column>
       <el-table-column prop="diaryDate" label="记录日期" width="120" />
+      <!-- 情绪评分（使用星级展示） -->
       <el-table-column label="情绪评分">
         <template #default="scope">
           <el-rate :model-value="scope.row.moodScore" :max="10" disabled />
         </template>
       </el-table-column>
+      <!-- 生活指标 -->
       <el-table-column label="生活指标" width="120">
         <template #default="scope">
           <div>
@@ -29,6 +39,7 @@
       </el-table-column>
       <el-table-column prop="emotionTriggers" label="情绪触发因素" width="120" />
       <el-table-column prop="diaryContent" label="日志内容" width="250" />
+      <!-- 操作列 -->
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="scope">
           <el-button @click="viewSessionDetail(scope.row)" text type="primary">详情</el-button>
@@ -36,6 +47,7 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 分页组件 -->
     <el-pagination
     style="margin-top:25px"
     :page-size="pagination.size"
@@ -44,6 +56,7 @@
     @change="handleChange"
     />
 
+    <!-- 情绪日志详情弹窗 -->
     <el-dialog
     v-model="detailDialogVisible"
     title="情绪日志详情"
@@ -51,6 +64,7 @@
     :close-on-click-modal="false"
     >
     <div class="detail-content" v-if="currentDetail">
+        <!-- 用户信息 -->
         <div class="detail-section">
           <h4>用户信息</h4>
           <el-descriptions :column="2" border>
@@ -60,6 +74,7 @@
             <el-descriptions-item label="记录日期">{{ currentDetail.diaryDate }}</el-descriptions-item>
           </el-descriptions>
         </div>
+        <!-- 情绪状态 -->
         <div class="detail-section">
           <h4>情绪状态</h4>
           <el-descriptions :column="2" border>
@@ -73,6 +88,7 @@
             <el-descriptions-item label="压力水平">{{ currentDetail.stressLevel || '-' }}</el-descriptions-item>
           </el-descriptions>
         </div>
+        <!-- 日记内容 -->
         <div class="detail-section">
           <h4>日记内容</h4>
           <el-descriptions :column="1" border>
@@ -80,6 +96,7 @@
             <el-descriptions-item label="日记内容">{{ currentDetail.diaryContent || '-' }}</el-descriptions-item>
           </el-descriptions>
         </div>
+        <!-- AI情绪分析结果 -->
         <div class="detail-section">
           <h4>AI情绪分析结果</h4>
           <div class="ai-analysis-result">
@@ -97,14 +114,17 @@
               <el-tag :type="aiData.isNegative ? 'danger' : 'success'">{{ aiData.isNegative ? '负面情绪' : '正面情绪' }}</el-tag>
             </el-descriptions-item>
             </el-descriptions>
+            <!-- 专业建议 -->
             <div class="ai-suggestion-section">
           <h5>专业建议</h5>
           <div class="suggestion-content">{{ aiData.suggestion || '无' }}</div>
             </div>
+            <!-- 风险描述 -->
             <div class="ai-risk-section">
               <h5>风险描述</h5>
               <div class="risk-content">{{ aiData.riskDescription || '无' }}</div>
             </div>
+            <!-- 改善建议 -->
             <div class="ai-improvements-section">
               <h5>改善建议</h5>
               <ul class="improvement-list">
@@ -113,6 +133,7 @@
             </div>
           </div>
         </div>
+        <!-- 时间信息 -->
         <div class="detail-section">
           <h4>时间信息</h4>
           <el-descriptions :column="2" border>
@@ -132,6 +153,7 @@ import TableSearch from '@/components/TableSearch.vue'
 import { getEmotionalPage , deleteEmotional } from '@/api/admin'
 import {ElMessageBox} from 'element-plus'
 
+// ==================== 搜索配置 ====================
 const formItem = [
   {
     comp:'input',
@@ -161,19 +183,33 @@ const formItem = [
   }
 ]
 
+// ==================== 数据状态 ====================
 const tableData = ref([])
+const detailDialogVisible = ref(false)  // 详情弹窗显示状态
+const currentDetail = ref(null)         // 当前查看的详情
+const aiData = ref(null)                // AI分析数据
 
+// ==================== 分页状态 ====================
 const pagination = reactive({
   currentPage:1,
   size:10,
   total:0
 })
 
+// ==================== 方法 ====================
+/**
+ * 分页切换
+ * @param {number} page - 页码
+ */
 const handleChange = (page) => {
   pagination.currentPage = page
   handleSearch()
 }
 
+/**
+ * 搜索情绪日志列表
+ * @param {Object} formData - 搜索条件
+ */
 const handleSearch = async (formData) => {
     const params = {
       ...pagination,
@@ -186,11 +222,14 @@ const handleSearch = async (formData) => {
 
 }
 
-const detailDialogVisible = ref(false)
-const currentDetail = ref(null)
-const aiData = ref(null)
+/**
+ * 查看情绪日志详情
+ * 解析AI分析数据并显示弹窗
+ * @param {Object} row - 日志数据
+ */
 const viewSessionDetail = (row) => {
   currentDetail.value = row
+  // 解析AI情绪分析JSON数据
   if(row.aiEmotionAnalysis){
     aiData.value = JSON.parse(row.aiEmotionAnalysis)
   } else {
@@ -199,6 +238,10 @@ const viewSessionDetail = (row) => {
   detailDialogVisible.value = true
 }
 
+/**
+ * 删除情绪日志
+ * @param {Object} row - 日志数据
+ */
 const handleDelete = (row) => {
   ElMessageBox.confirm('确认删除该条记录吗？','删除确认',{
     confirmButtonText: '确认',
@@ -211,10 +254,17 @@ const handleDelete = (row) => {
   })
 }
 
+// ==================== 生命周期 ====================
 onMounted(()=>{
   handleSearch()
 })
 
+// ==================== 辅助方法 ====================
+/**
+ * 获取情绪标签类型
+ * @param {string} emotion - 情绪名称
+ * @returns {string} Element Plus标签类型
+ */
 const getEmotionTagType = (emotion) => {
   const emotionTypes = {
     '快乐': 'success',
@@ -227,6 +277,11 @@ const getEmotionTagType = (emotion) => {
   return emotionTypes[emotion] || 'info'
 }
 
+/**
+ * 获取AI分析情绪标签类型
+ * @param {string} emotion - 情绪名称
+ * @returns {string} Element Plus标签类型
+ */
 const getAiEmotionTagType = (emotion) => {
   const emotionTagMap = {
     '快乐': 'success',
@@ -243,6 +298,11 @@ const getAiEmotionTagType = (emotion) => {
   return emotionTagMap[emotion] || 'info'
 }
 
+/**
+ * 获取情绪强度进度条颜色
+ * @param {number} score - 情绪强度分数
+ * @returns {string} 颜色值
+ */
 const getEmotionScoreColor = (score) => {
   if (score >= 80) return '#f56c6c'
   if (score >= 60) return '#e6a23c'
@@ -250,6 +310,11 @@ const getEmotionScoreColor = (score) => {
   return '#67c23a'
 }
 
+/**
+ * 获取风险等级标签类型
+ * @param {number} riskLevel - 风险等级
+ * @returns {string} Element Plus标签类型
+ */
 const getRiskLevelTagType = (riskLevel) => {
   const riskTagMap = {
     0: 'success',
@@ -260,6 +325,11 @@ const getRiskLevelTagType = (riskLevel) => {
   return riskTagMap[riskLevel] || 'info'
 }
 
+/**
+ * 获取风险等级文本
+ * @param {number} riskLevel - 风险等级
+ * @returns {string} 风险等级文本
+ */
 const getRiskLevelText = (riskLevel) => {
   const riskTextMap = {
     0: '正常',
@@ -272,6 +342,7 @@ const getRiskLevelText = (riskLevel) => {
 </script>
 
 <style lang="scss" scoped>
+/* 详情内容样式 */
 .detail-content {
   .detail-section {
     margin-bottom: 24px;
@@ -289,7 +360,7 @@ const getRiskLevelText = (riskLevel) => {
   }
 }
 
-// AI分析相关样式
+/* AI分析相关样式 */
 .ai-analysis-status {
   .ai-status-tag {
     margin-bottom: 4px;

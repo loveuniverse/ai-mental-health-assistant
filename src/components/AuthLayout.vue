@@ -1,5 +1,11 @@
+<!--
+  认证页面布局组件
+  用于登录、注册等认证页面的左右分栏布局
+  左侧显示品牌信息和宣传语，右侧显示表单内容
+-->
 <template>
   <div class="auth-layout">
+    <!-- 左侧品牌宣传区域 -->
     <div class="left-section">
         <div class="content">
             <h2 class="title">心理AI助手</h2>
@@ -9,6 +15,7 @@
             </div>
         </div>
     </div>
+    <!-- 右侧表单内容区域 -->
     <div class="right-section">
         <router-view></router-view>
     </div>
@@ -16,6 +23,7 @@
 </template>
 
 <style lang="scss" scoped>
+/* 认证布局样式 */
 .auth-layout {
     display: flex;
     .left-section {
@@ -68,5 +76,6 @@
 </style>
 
 <script setup>
+// 机器人图标路径
 const iconUrl = new URL('@/assets/images/robot-fill.png', import.meta.url).href
 </script>

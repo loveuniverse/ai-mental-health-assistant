@@ -1,6 +1,13 @@
+<!--
+  咨询记录管理页面
+  展示用户与AI助手的咨询会话列表
+  支持查看会话详情和对话记录
+-->
 <template> 
   <div>
+    <!-- 页面头部 -->
     <PageHead title="咨询记录" />
+    <!-- 会话列表表格 -->
     <el-table :data="tableData" style="width: 100%">
       <el-table-column label="会话ID" width="200" >
         <template #default="scope">
@@ -21,6 +28,7 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 分页组件 -->
     <el-pagination 
       style="margin-top: 25px;"
       :page-size="pagination.size"
@@ -29,6 +37,7 @@
       :total="pagination.total"
       @current-change="handlePageChange"
     />
+    <!-- 会话详情弹窗 -->
     <el-dialog 
       v-model="showDetailDialog"
       title="咨询会话详情"
@@ -36,6 +45,7 @@
       :close-on-click-modal="false"
     >
       <div class="session-detail">
+        <!-- 会话基本信息 -->
         <div class="detail-header">
           <div class="detail-row">
             <div class="detail-label">用户:</div>
@@ -50,6 +60,7 @@
             <div class="detail-value">{{ sessionDetail.messageCount }}</div>
           </div>
         </div>
+        <!-- 对话记录列表 -->
         <div class="messages-container">
           <div class="messages-header">
             <h4>对话记录</h4>
@@ -71,22 +82,32 @@
     </el-dialog>
   </div>
 </template>
+
 <script setup>
 import { onMounted ,ref, reactive} from 'vue';
 import { getConsultationPage,getSessionDetail } from '@/api/admin';
 import PageHead from '@/components/PageHead.vue';
+
+// ==================== 数据状态 ====================
 const tableData = ref([])
-//
-const showDetailDialog = ref(false)
+const showDetailDialog = ref(false)   // 详情弹窗显示状态
+const sessionDetail = ref('')         // 当前会话详情
+const sessionMessages = ref([])       // 会话消息列表
+const loadingMessages = ref(false)    // 消息加载状态
+
+// ==================== 分页状态 ====================
 const pagination = reactive({
   currentPage: 1,
   size: 10,
   total: 0,
 })
-// 查看会话详情
-const sessionDetail = ref('')
-const sessionMessages = ref([])
-const loadingMessages = ref(false)
+
+// ==================== 方法 ====================
+/**
+ * 查看会话详情
+ * 打开弹窗并加载会话消息
+ * @param {Object} row - 会话数据
+ */
 const viewSessionDetail = (row) => {
   console.log('查看会话详情:', row);
   loadingMessages.value = true
@@ -100,12 +121,18 @@ const viewSessionDetail = (row) => {
   console.log(sessionMessages.value);
 }
 
-// 分页
+/**
+ * 分页切换
+ * @param {number} page - 页码
+ */
 const handlePageChange = (page) => {
   pagination.currentPage = page
   handleSearch()
 }
-// 搜索
+
+/**
+ * 获取会话列表数据
+ */
 const handleSearch=()=>{
   getConsultationPage(pagination).then(res => {
     const {records,total} = res
@@ -113,17 +140,21 @@ const handleSearch=()=>{
     pagination.total = total
   })
 }
-// 获取数据
+
+// ==================== 生命周期 ====================
 onMounted(() => {
   handleSearch()
 })
 </script>
+
 <style lang="scss" scoped>
+/* 会话标题样式 */
 .session-title {
     font-weight: 500;
     color: #333;
     margin-bottom: 4px;
   }
+  /* 会话预览样式 */
   .session-preview {
     font-size: 13px;
     color: #666;
@@ -134,6 +165,7 @@ onMounted(() => {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  /* 详情弹窗样式 */
   .session-detail {
     max-height: 70vh;
     overflow-y: auto;
@@ -191,9 +223,11 @@ onMounted(() => {
           &:last-child {
             margin-bottom: 0;
           }
+          /* 用户消息样式 */
           &.user-message {
             background: #e8f4fd;
           }
+          /* AI消息样式 */
           &.ai-message {
             background: #f0f9f0;
           }
